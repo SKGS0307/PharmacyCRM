@@ -1,6 +1,7 @@
 # Pharmacy CRM - Complete Management System
 
 A comprehensive pharmacy inventory management and sales tracking system built with **FastAPI** (Python) backend and **React** frontend with **Tailwind CSS**.
+Live URL : https://pharmacy-crm-six.vercel.app/inventory
 
 ## 🚀 Features
 
