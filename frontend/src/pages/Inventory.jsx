@@ -7,6 +7,8 @@ const Inventory = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -152,17 +154,31 @@ const Inventory = () => {
     }
   };
 
+  const handleFilterToggle = () => {
+    setShowFilterMenu(!showFilterMenu);
+  };
+
+  const handleFilterChange = (status) => {
+    setSelectedFilters((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+  };
+
   // Compute stats dynamically from the actual fetched backend data
   const totalItems = medicines.length;
   const activeStock = medicines.filter(m => m.status === 'Active').length;
   const lowStock = medicines.filter(m => m.status === 'Low Stock').length;
   const totalValue = medicines.reduce((sum, item) => sum + (item.quantity * item.cost_price), 0);
 
-  // Filter functionality
-  const filteredMedicines = medicines.filter(m => 
-    m.medicine_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    m.generic_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter functionality - now includes status filter
+  const filteredMedicines = medicines.filter(m => {
+    const matchesSearch = m.medicine_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         m.generic_name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = selectedFilters.length === 0 || selectedFilters.includes(m.status);
+    
+    return matchesSearch && matchesFilter;
+  });
 
   // Status Badge styling logic
   const getStatusStyle = (status) => {
@@ -229,7 +245,7 @@ const Inventory = () => {
       {/* Complete Inventory Header & Controls */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-sm font-semibold text-gray-800">Complete Inventory</h2>
-        <div className="flex gap-3">
+        <div className="flex gap-3 relative">
           <input 
             type="text" 
             placeholder="Search..." 
@@ -237,9 +253,62 @@ const Inventory = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm">
-            <Filter size={14} /> Filter
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowFilterMenu(!showFilterMenu)}
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm font-medium shadow-sm transition-colors ${
+                selectedFilters.length > 0 
+                  ? 'bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100' 
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Filter size={14} /> Filter
+              {selectedFilters.length > 0 && (
+                <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full font-semibold">
+                  {selectedFilters.length}
+                </span>
+              )}
+            </button>
+            
+            {/* Filter Dropdown Menu */}
+            {showFilterMenu && (
+              <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-48">
+                <div className="p-3 border-b border-gray-100 flex justify-between items-center">
+                  <span className="text-sm font-semibold text-gray-800">Filter by Status</span>
+                  {selectedFilters.length > 0 && (
+                    <button 
+                      onClick={() => setSelectedFilters([])}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+                <div className="p-2 space-y-1">
+                  {['Active', 'Low Stock', 'Expired', 'Out of Stock'].map((status) => (
+                    <label key={status} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedFilters.includes(status)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedFilters([...selectedFilters, status]);
+                          } else {
+                            setSelectedFilters(selectedFilters.filter(f => f !== status));
+                          }
+                        }}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span className="text-sm text-gray-700">{status}</span>
+                      <span className="ml-auto text-xs text-gray-500">
+                        ({medicines.filter(m => m.status === status).length})
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm">
             <Download size={14} /> Export
           </button>
