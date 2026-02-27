@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Create axios instance with proper configuration
-const API_BASE_URL = import.meta.env.DEV ? '/api' : 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.DEV ? '/api' : 'https://pharmacycrm.onrender.com/api';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
